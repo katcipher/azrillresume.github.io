@@ -392,11 +392,11 @@
       </div>
     </div>
   </div>
-  <div class="lb-backdrop" id="lbBackdrop" onclick="closeAlbum()"></div>
+  <div class="lb-backdrop" id="lbBackdrop" onclick="window.closeAlbum()"></div>
   <div class="lb-modal" id="lbModal">
     <div class="lb-header">
       <div><div class="lb-cat" id="lbCat"></div><div class="lb-title" id="lbTitle"></div></div>
-      <button class="lb-close" onclick="closeAlbum()">✕</button>
+      <button class="lb-close" onclick="window.closeAlbum()" type="button">✕</button>
     </div>
     <div class="lb-body" id="lbBody"></div>
   </div>
@@ -556,13 +556,16 @@
 
   wi
 
-  window.closeAlbum = function() {
+ window.closeAlbum = function() {
     var modal = document.getElementById('lbModal');
-    modal.classList.remove('open');
-    document.getElementById('lbBackdrop').classList.remove('open');
+    var backdrop = document.getElementById('lbBackdrop');
+    var body = document.getElementById('lbBody');
+    if (modal) modal.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
     document.body.style.overflow = '';
-    // Stop any playing videos
-    setTimeout(function() { document.getElementById('lbBody').innerHTML = ''; }, 350);
+    setTimeout(function() {
+      if (body) body.innerHTML = '';
+    }, 400);
   };
 
   document.addEventListener('keydown', function(e) {
