@@ -201,6 +201,51 @@
       .albums-grid { grid-template-columns: 1fr; }
       .album-wide { grid-column: span 1; aspect-ratio: 4/3; }
     }
+
+    /* ── IMAGE ZOOM VIEWER ─────────────────────────────── */
+.zoom-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 600;
+  background: rgba(0,0,0,0.92); backdrop-filter: blur(6px);
+  align-items: center; justify-content: center;
+  cursor: zoom-out;
+}
+.zoom-backdrop.open { display: flex; }
+.zoom-img-wrap {
+  position: relative; max-width: 92vw; max-height: 90vh;
+  display: flex; align-items: center; justify-content: center;
+}
+.zoom-img-wrap img {
+  max-width: 92vw; max-height: 90vh;
+  object-fit: contain; display: block;
+  border: 1px solid var(--border);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+  user-select: none;
+}
+.zoom-caption {
+  position: absolute; bottom: -2.2rem; left: 0; right: 0;
+  text-align: center; font-size: 0.78rem;
+  color: var(--text-muted); letter-spacing: 0.05em;
+}
+.zoom-close {
+  position: fixed; top: 1.2rem; right: 1.4rem;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-muted); width: 38px; height: 38px;
+  cursor: pointer; font-size: 1rem; z-index: 601;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.2s, color 0.2s;
+}
+.zoom-close:hover { border-color: var(--gold); color: var(--gold); }
+.zoom-nav {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  background: none; border: 1px solid var(--border);
+  color: var(--text-muted); width: 42px; height: 42px;
+  cursor: pointer; font-size: 1.1rem; z-index: 601;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.2s, color 0.2s;
+}
+.zoom-nav:hover { border-color: var(--gold); color: var(--gold); }
+.zoom-prev { left: 1rem; }
+.zoom-next { right: 1rem; }
   </style>
 </head>
 <body>
@@ -608,6 +653,58 @@
     if (backdrop) backdrop.addEventListener('click', window.closeAlbum);
   });
 
+  /* ── IMAGE ZOOM ─────────────────────────────────────────────── */
+  var zoomImages = [];
+  var zoomIndex  = 0;
+
+  window.openZoom = function(images, index) {
+    zoomImages = images;
+    zoomIndex  = index;
+    renderZoom();
+    document.getElementById('zoomBackdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeZoom = function() {
+    document.getElementById('zoomBackdrop').classList.remove('open');
+    document.body.style.overflow = '';
+    zoomImages = [];
+  };
+
+  function renderZoom() {
+    var item = zoomImages[zoomIndex];
+    document.getElementById('zoomImg').src = item.src;
+    document.getElementById('zoomImg').alt = item.caption || '';
+    document.getElementById('zoomCaption').textContent = item.caption || '';
+    document.getElementById('zoomPrev').style.display = zoomImages.length > 1 ? 'flex' : 'none';
+    document.getElementById('zoomNext').style.display = zoomImages.length > 1 ? 'flex' : 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('zoomClose').addEventListener('click', function(e) {
+      e.stopPropagation(); window.closeZoom();
+    });
+    document.getElementById('zoomBackdrop').addEventListener('click', function(e) {
+      if (e.target === this) window.closeZoom();
+    });
+    document.getElementById('zoomPrev').addEventListener('click', function(e) {
+      e.stopPropagation();
+      zoomIndex = (zoomIndex - 1 + zoomImages.length) % zoomImages.length;
+      renderZoom();
+    });
+    document.getElementById('zoomNext').addEventListener('click', function(e) {
+      e.stopPropagation();
+      zoomIndex = (zoomIndex + 1) % zoomImages.length;
+      renderZoom();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (!document.getElementById('zoomBackdrop').classList.contains('open')) return;
+      if (e.key === 'Escape')     { window.closeZoom(); }
+      if (e.key === 'ArrowLeft')  { zoomIndex = (zoomIndex - 1 + zoomImages.length) % zoomImages.length; renderZoom(); }
+      if (e.key === 'ArrowRight') { zoomIndex = (zoomIndex + 1) % zoomImages.length; renderZoom(); }
+    });
+  });
+
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') window.closeAlbum();
   });
@@ -617,5 +714,16 @@
   });
 })();
 </script>
+  
+<!-- IMAGE ZOOM VIEWER -->
+<div class="zoom-backdrop" id="zoomBackdrop">
+  <button class="zoom-close" id="zoomClose" type="button">✕</button>
+  <button class="zoom-nav zoom-prev" id="zoomPrev" type="button">&#8249;</button>
+  <div class="zoom-img-wrap">
+    <img id="zoomImg" src="" alt="" />
+    <div class="zoom-caption" id="zoomCaption"></div>
+  </div>
+  <button class="zoom-nav zoom-next" id="zoomNext" type="button">&#8250;</button>
+</div>
 </body>
 </html>
